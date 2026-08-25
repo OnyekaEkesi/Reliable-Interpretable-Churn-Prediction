@@ -25,7 +25,7 @@ st.set_page_config(
 
 @st.cache_resource
 def load_model():
-    return joblib.load("models/lgbm_model.pkl") 
+    return joblib.load("models/xgb_model.pkl") 
 
 
 #########################################################
