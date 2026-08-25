@@ -25,7 +25,7 @@ st.set_page_config(
 
 @st.cache_resource
 def load_model():
-    return joblib.load("models/xgb_model.pkl") 
+    return joblib.load("models/lgbm_model.pkl") 
 
 
 #########################################################
@@ -99,8 +99,8 @@ st.sidebar.title("Customer Churn Prediction")
 
 st.sidebar.markdown("---")
 
-page = st.sidebar.radio(
-    "Select Function",
+page = st.sidebar.selectbox(
+    "Select Prediction Type",
     (
         "Single Prediction",
         "Batch Prediction"
@@ -402,38 +402,186 @@ if page == "Single Prediction":
             )
 
         ###############
+        ##############################################################
+        # CUSTOMER-FRIENDLY LOCAL EXPLANATION
+        ##############################################################
 
         st.markdown("---")
-        st.subheader("Local Prediction Explanation")
 
-        # Compute SHAP explanation
+        st.subheader("Why was this prediction made?")
+
+        if prediction == 1:
+
+            st.error(
+                f"""
+                **This customer is considered at risk of leaving.**
+
+                The model estimates a **{probability:.1%} probability of churn**.
+
+                The explanation below shows the customer characteristics
+                that had the greatest influence on this prediction.
+                """
+            )
+
+        else:
+
+            st.success(
+                f"""
+                **This customer is currently considered unlikely to leave.**
+
+                The model estimates a **{probability:.1%} probability of churn**.
+
+                The explanation below shows which customer characteristics
+                influenced the prediction.
+                """
+            )
+
+
+        st.write(
+            """
+            The factors below do not necessarily cause a customer to leave.
+            Instead, they show which customer characteristics had the greatest
+            influence on the model's decision for this particular customer.
+            """
+        )
+
+
+        ##############################################################
+        # COMPUTE LOCAL SHAP EXPLANATION
+        ##############################################################
+
         explanation = explainer(input_df)
 
-        ###########################################################
+
+        ##############################################################
         # GET LOCAL EXPLANATION
-        ###########################################################
+        ##############################################################
 
         if len(explanation.values.shape) == 3:
-            # Binary classifier returning explanations for both classes
+
             local_exp = shap.Explanation(
+
                 values=explanation.values[0, :, 1],
+
                 base_values=explanation.base_values[0, 1],
+
                 data=input_df.iloc[0].values,
+
                 feature_names=input_df.columns.tolist()
+
             )
+
         else:
-            # Standard single-output explanation
+
             local_exp = shap.Explanation(
+
                 values=explanation.values[0],
+
                 base_values=explanation.base_values[0],
+
                 data=input_df.iloc[0].values,
+
                 feature_names=input_df.columns.tolist()
+
             )
+
+
+        ##############################################################
+        # FEATURE CONTRIBUTION DATA
+        ##############################################################
+
+        importance_df = pd.DataFrame({
+
+            "Feature": local_exp.feature_names,
+
+            "Feature Value": local_exp.data,
+
+            "SHAP Value": local_exp.values
+
+        })
+
+
+        importance_df["Absolute SHAP"] = (
+            importance_df["SHAP Value"].abs()
+        )
+
+
+        importance_df = (
+            importance_df
+            .sort_values(
+                "Absolute SHAP",
+                ascending=False
+            )
+        )
+
+
+        ##############################################################
+        # TOP FACTORS
+        ##############################################################
+
+        top_features = importance_df.head(5)
+
 
         st.markdown("---")
-        st.subheader("Local SHAP Waterfall Plot")
 
-        fig = plt.figure(figsize=(6,4))
+        st.subheader(
+            "Key Factors Influencing This Customer"
+        )
+
+        st.write(
+            """
+            These are the five customer characteristics that had the
+            strongest influence on the model's prediction.
+            """
+        )
+
+
+        for _, row in top_features.iterrows():
+
+            feature = row["Feature"]
+
+            shap_value = row["SHAP Value"]
+
+            if shap_value > 0:
+
+                st.warning(
+                    f"**{feature}** — increases the customer's "
+                    f"estimated churn risk."
+                )
+
+            elif shap_value < 0:
+
+                st.success(
+                    f"**{feature}** — reduces the customer's "
+                    f"estimated churn risk."
+                )
+
+            else:
+
+                st.info(
+                    f"**{feature}** — had little influence on this prediction."
+                )
+
+
+        ##############################################################
+        # SHAP WATERFALL PLOT
+        ##############################################################
+
+        st.markdown("---")
+
+        st.subheader(
+            "Detailed Prediction Explanation"
+        )
+
+        st.write(
+            """
+            The chart below provides a more detailed view of how the
+            individual customer characteristics contributed to the prediction.
+            """
+        )
+
+
+        fig = plt.figure(figsize=(8, 5))
 
         shap.plots.waterfall(
             local_exp,
@@ -441,66 +589,134 @@ if page == "Single Prediction":
             show=False
         )
 
-        st.pyplot(fig)
+        st.pyplot(
+            fig,
+            use_container_width=True
+        )
 
         plt.close(fig)
 
-        #############################
 
-        importance_df = pd.DataFrame({
-            "Feature": local_exp.feature_names,
-            "Feature Value": local_exp.data,
-            "SHAP Value": local_exp.values
-        })
+        ##############################################################
+        # EXPLANATION UNDER SHAP PLOT
+        ##############################################################
 
-        importance_df["Absolute SHAP"] = importance_df["SHAP Value"].abs()
+        st.info(
+            """
+            **How to read this chart**
 
-        importance_df = (
-            importance_df
-            .sort_values("Absolute SHAP", ascending=False)
-            .drop(columns="Absolute SHAP")
+            Each feature represents information about this customer.
+
+            • Features pushing the prediction toward **Churn** increase
+            the customer's estimated risk of leaving.
+
+            • Features pushing the prediction toward **No Churn** reduce
+            the estimated risk.
+
+            • Larger contributions indicate a stronger influence on the
+            model's prediction.
+
+            **Important:** These values describe how the model arrived at
+            its prediction. They should not be interpreted as proof that
+            a particular feature directly causes customer churn.
+            """
         )
 
-        st.markdown("---")
-        st.subheader("Feature Contributions")
 
-        st.dataframe(
-            importance_df,
-            use_container_width=True,
-            hide_index=True
-        )
+        ##############################################################
+        # TECHNICAL FEATURE CONTRIBUTIONS
+        ##############################################################
 
-        positive_features = (
-            importance_df[importance_df["SHAP Value"] > 0]
-            .sort_values("SHAP Value", ascending=False)
-            .head(5)
-        )
+        with st.expander(
+            "View Technical Feature Contributions"
+        ):
 
-        negative_features = (
-            importance_df[importance_df["SHAP Value"] < 0]
-            .sort_values("SHAP Value")
-            .head(5)
-        )
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.success("Top Factors Increasing Churn")
-            st.dataframe(
-                positive_features,
-                use_container_width=True,
-                hide_index=True
+            technical_df = importance_df.drop(
+                columns=["Absolute SHAP"]
             )
 
-        with col2:
-            st.info("Top Factors Reducing Churn")
             st.dataframe(
-                negative_features,
+                technical_df,
                 use_container_width=True,
                 hide_index=True
             )
 
 
+        ##############################################################
+        # POSITIVE AND NEGATIVE FACTORS
+        ##############################################################
+
+        with st.expander(
+            "View Factors Increasing and Reducing Churn"
+        ):
+
+            positive_features = (
+
+                importance_df[
+                    importance_df["SHAP Value"] > 0
+                ]
+
+                .sort_values(
+                    "SHAP Value",
+                    ascending=False
+                )
+
+                .head(5)
+
+                .drop(
+                    columns=["Absolute SHAP"]
+                )
+
+            )
+
+
+            negative_features = (
+
+                importance_df[
+                    importance_df["SHAP Value"] < 0
+                ]
+
+                .sort_values(
+                    "SHAP Value"
+                )
+
+                .head(5)
+
+                .drop(
+                    columns=["Absolute SHAP"]
+                )
+
+            )
+
+
+            col1, col2 = st.columns(2)
+
+
+            with col1:
+
+                st.write(
+                    "**Factors Increasing Churn Risk**"
+                )
+
+                st.dataframe(
+                    positive_features,
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+
+            with col2:
+
+                st.write(
+                    "**Factors Reducing Churn Risk**"
+                )
+
+                st.dataframe(
+                    negative_features,
+                    use_container_width=True,
+                    hide_index=True
+                )
+      
 ##############################################################
 # BATCH PREDICTION
 ##############################################################
@@ -781,7 +997,7 @@ elif page == "Batch Prediction":
             hide_index=True
         )
 
-##########################################################
+        ##########################################################
         # FILTER
         ##########################################################
 
@@ -845,10 +1061,38 @@ elif page == "Batch Prediction":
 
         # COMPUTE SHAP VALUES
 
+        ##############################################################
+        # GLOBAL MODEL INTERPRETABILITY
+        ##############################################################
+
+        st.markdown("---")
+
+        st.subheader(
+            "What Drives Churn Across These Customers?"
+        )
+
+        st.write(
+            """
+            This analysis looks across all customers in the uploaded
+            dataset and identifies the characteristics that the model
+            relies on most heavily when predicting customer churn.
+
+            These insights can help the customer-care team identify
+            customers or characteristics that may require closer attention.
+            """
+        )
+
+
+        ##############################################################
+        # COMPUTE SHAP VALUES
+        ##############################################################
+
         explanation = explainer(processed_df)
 
-        ####################################################
+
+        ##############################################################
         # SELECT POSITIVE CLASS
+        ##############################################################
 
         if len(explanation.values.shape) == 3:
 
@@ -858,22 +1102,98 @@ elif page == "Batch Prediction":
 
             shap_values = explanation.values
 
-        ####################
-        st.markdown("---")
 
-        st.subheader("Global Feature Importance")
+        ##############################################################
+        # GLOBAL SHAP EXPLANATION OBJECT
+        ##############################################################
 
         summary_exp = shap.Explanation(
+
             values=shap_values,
+
             base_values=np.repeat(
-                np.mean(np.atleast_1d(explanation.base_values)),
+
+                np.mean(
+                    np.atleast_1d(
+                        explanation.base_values
+                    )
+                ),
+
                 processed_df.shape[0]
+
             ),
+
             data=processed_df.values,
+
             feature_names=processed_df.columns.tolist()
+
         )
 
-        fig = plt.figure(figsize=(6, 4))
+
+        ##############################################################
+        # CALCULATE GLOBAL IMPORTANCE
+        ##############################################################
+
+        importance = pd.DataFrame({
+
+            "Feature": processed_df.columns,
+
+            "Mean |SHAP|": np.abs(
+                shap_values
+            ).mean(axis=0)
+
+        })
+
+
+        importance = importance.sort_values(
+            "Mean |SHAP|",
+            ascending=False
+        )
+
+
+        ##############################################################
+        # TOP GLOBAL FACTORS
+        ##############################################################
+
+        top_global_features = importance.head(5)
+
+
+        st.subheader(
+            "Most Influential Churn Factors"
+        )
+
+        for i, (_, row) in enumerate(
+            top_global_features.iterrows(),
+            start=1
+        ):
+
+            st.write(
+                f"**{i}. {row['Feature']}** — "
+                f"one of the strongest factors used by the model "
+                f"when predicting churn."
+            )
+
+
+        ##############################################################
+        # GLOBAL SHAP BAR CHART
+        ##############################################################
+
+        st.markdown("---")
+
+        st.subheader(
+            "Global Feature Importance"
+        )
+
+        st.write(
+            """
+            The chart shows the features that have the greatest overall
+            influence on the model's churn predictions across the uploaded
+            customer dataset.
+            """
+        )
+
+
+        fig = plt.figure(figsize=(8, 5))
 
         shap.plots.bar(
             summary_exp,
@@ -881,103 +1201,196 @@ elif page == "Batch Prediction":
             show=False
         )
 
-        st.pyplot(fig)
+        st.pyplot(
+            fig,
+            use_container_width=True
+        )
 
         plt.close(fig)
 
-        #########
 
-        st.markdown("---")
-        st.subheader("SHAP Beeswarm Plot")
+        ##############################################################
+        # EXPLANATION UNDER SHAP BAR CHART
+        ##############################################################
 
-        fig = plt.figure(figsize=(10, 7))
+        st.info(
+            """
+            **How to read this chart**
 
-        shap.plots.beeswarm(
-            summary_exp,
-            max_display=15,
-            show=False
+            Features appearing closer to the top have a greater overall
+            influence on the model's predictions.
+
+            A feature with a larger importance value is used more strongly
+            by the model when distinguishing customers who are likely to
+            churn from those who are not.
+
+            **Important:** Feature importance describes the model's behaviour.
+            It does not mean that a feature directly causes customer churn.
+            """
         )
 
-        st.pyplot(fig)
 
-        plt.close(fig)
+        ##############################################################
+        # TECHNICAL SHAP ANALYSIS
+        ##############################################################
 
-        # ##########
+        with st.expander(
+            "View Technical SHAP Analysis"
+        ):
 
-        importance = pd.DataFrame({
+            st.subheader(
+                "SHAP Beeswarm Plot"
+            )
 
-            "Feature": processed_df.columns,
+            fig = plt.figure(
+                figsize=(10, 7)
+            )
 
-            "Mean |SHAP|": np.abs(shap_values).mean(axis=0)
+            shap.plots.beeswarm(
+                summary_exp,
+                max_display=15,
+                show=False
+            )
 
-        })
+            st.pyplot(
+                fig,
+                use_container_width=True
+            )
 
-        importance = importance.sort_values(
-            "Mean |SHAP|",
-            ascending=False
-        )
+            plt.close(fig)
 
-        st.markdown("---")
-        st.subheader("Global Feature Importance Table")
 
-        st.dataframe(
-            importance,
-            use_container_width=True,
-            hide_index=True
-        )
-        # #######
-        st.markdown("---")
-        st.subheader("Feature Dependence Plot")
+            st.info(
+                """
+                The beeswarm plot provides a more detailed technical view
+                of how individual feature values affect model predictions
+                across the customer population.
+                """
+            )
 
-        feature = st.selectbox(
-            "Select a Feature",
-            processed_df.columns
-        )
 
-        fig, ax = plt.subplots(figsize=(10, 6))
+        ##############################################################
+        # GLOBAL FEATURE IMPORTANCE TABLE
+        ##############################################################
 
-        shap.dependence_plot(
-            feature,
-            shap_values,
-            processed_df,
-            ax=ax,
-            show=False
-        )
+        with st.expander(
+            "View Advanced Feature Dependence Analysis"
+        ):
 
-        st.pyplot(fig)
+            st.subheader(
+                "Feature Dependence Plot"
+            )
 
-        plt.close(fig)
+            st.write(
+                """
+                This technical analysis shows how the relationship between
+                an individual feature and the model's prediction changes
+                across the customer dataset.
+                """
+            )
 
+            feature = st.selectbox(
+                "Select a Feature",
+                processed_df.columns,
+                key="shap_dependence_feature"
+            )
+
+            fig, ax = plt.subplots(
+                figsize=(10, 6)
+            )
+
+            shap.dependence_plot(
+                feature,
+                shap_values,
+                processed_df,
+                ax=ax,
+                show=False
+            )
+
+            st.pyplot(
+                fig,
+                use_container_width=True
+            )
+
+            plt.close(fig)
+
+            st.info(
+                """
+                **Interpretation:** This plot helps technical users
+                understand how changes in a feature are associated with
+                changes in the model's output.
+                """
+            )
         ######################
 
-        st.markdown("---")
-        st.subheader("Partial Dependence Plot (PDP)")
+        with st.expander(
+            "View Advanced Partial Dependence Analysis"
+        ):
 
-        feature = st.selectbox(
-            "Select a feature",
-            processed_df.columns.tolist()
-        )
+            st.subheader(
+                "Partial Dependence Plot"
+            )
 
-        # Make a copy
-        pdp_data = processed_df.copy()
+            st.write(
+                """
+                The Partial Dependence Plot shows how the model's predicted
+                churn behaviour changes as a selected feature changes,
+                while averaging over the other features in the dataset.
+                """
+            )
 
-        # Convert all numeric columns to float
-        numeric_cols = pdp_data.select_dtypes(include=[np.number]).columns
+            feature = st.selectbox(
+                "Select a feature",
+                processed_df.columns.tolist(),
+                key="pdp_feature"
+            )
 
-        pdp_data[numeric_cols] = pdp_data[numeric_cols].astype(float)
-        fig, ax = plt.subplots(figsize=(10, 6))
+            pdp_data = processed_df.copy()
 
-        PartialDependenceDisplay.from_estimator(
-            estimator=model,
-            X=pdp_data,
-            features=[feature],
-            kind="average",
-            grid_resolution=50,
-            ax=ax
-        )
+            numeric_cols = (
+                pdp_data
+                .select_dtypes(include=[np.number])
+                .columns
+            )
 
-        ax.set_title(f"Partial Dependence Plot for {feature}")
+            pdp_data[numeric_cols] = (
+                pdp_data[numeric_cols]
+                .astype(float)
+            )
 
-        st.pyplot(fig)
+            fig, ax = plt.subplots(
+                figsize=(10, 6)
+            )
 
-        plt.close(fig)
+            PartialDependenceDisplay.from_estimator(
+                estimator=model,
+                X=pdp_data,
+                features=[feature],
+                kind="average",
+                grid_resolution=50,
+                ax=ax
+            )
+
+            ax.set_title(
+                f"Partial Dependence Plot for {feature}"
+            )
+
+            st.pyplot(
+                fig,
+                use_container_width=True
+            )
+
+            plt.close(fig)
+
+            st.info(
+                """
+                **How to read this chart**
+
+                The plot shows the model's average predicted response
+                as the selected feature changes.
+
+                This is a model-behaviour analysis and should not be
+                interpreted as evidence that changing the feature will
+                necessarily cause a customer to churn or remain.
+                """
+            )
