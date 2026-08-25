@@ -41,7 +41,7 @@ The overall objective is to provide a practical decision-support tool that can h
 
 ---
 
-# Project Overview
+## Project Overview
 
 The project addresses the problem of predicting whether bank customers are likely to leave the institution.
 
@@ -58,9 +58,9 @@ The application is not intended to establish that a particular customer characte
 
 ---
 
-# Key Features
+## Key Features
 
-## Individual Customer Prediction
+### Individual Customer Prediction
 
 Users can enter information for an individual bank customer and obtain:
 
@@ -74,9 +74,7 @@ Users can enter information for an individual bank customer and obtain:
 - Technical feature contribution information
 - Factors increasing and reducing estimated churn risk
 
----
-
-## Batch Customer Prediction
+### Batch Customer Prediction
 
 Users can upload a CSV file containing multiple customer records and obtain:
 
@@ -87,163 +85,53 @@ Users can upload a CSV file containing multiple customer records and obtain:
 - Customer filtering
 - Downloadable prediction results
 
-The batch functionality is particularly useful when analysing a larger customer population and identifying customers who may require closer attention from customer-care teams.
+### Model Interpretability
+
+The application provides several interpretability methods:
+
+- Local SHAP explanations
+- Global SHAP feature importance
+- SHAP beeswarm analysis
+- SHAP dependence analysis
+- Partial dependence analysis
+
+These provide complementary views of how the model uses customer characteristics when predicting churn.
+
+### Uncertainty Analysis
+
+The application uses conformal prediction to provide prediction sets at a 95% confidence level.
+
+A prediction set may contain:
+
+- `{Churn}`
+- `{No Churn}`
+- `{No Churn, Churn}`
+
+A set containing both classes indicates that the conformal prediction does not provide a single-class prediction at the specified confidence level.
 
 ---
 
-# Model Interpretability
+## Getting Started
 
-Interpretability is a central component of the application because the system is intended to support customer-care decision-making rather than simply produce a binary prediction.
+These instructions explain how to set up and run the project locally.
 
-The application therefore provides both **local** and **global** model explanations.
+## Prerequisites
 
----
+Before running the project, ensure that Python is installed on your computer.
 
-## Local SHAP Explanations
+The project is developed using Python 3.12.
 
-For an individual customer, SHAP is used to identify the customer characteristics that contributed most strongly to the model's prediction.
+Python can be downloaded from:
 
-The application provides:
+https://www.python.org/
 
-- Key factors influencing the prediction
-- Factors increasing estimated churn risk
-- Factors reducing estimated churn risk
-- A SHAP waterfall plot
-- A technical feature contribution table
-
-### SHAP Waterfall Plot
-
-The waterfall plot provides a detailed view of how individual feature contributions move the prediction away from the model's baseline.
-
-Positive contributions indicate movement toward the churn prediction, while negative contributions indicate movement away from churn.
-
-These explanations describe the behaviour of the model and should not be interpreted as evidence that a particular characteristic directly causes customer churn.
+A virtual environment is recommended so that project dependencies remain isolated from other Python projects.
 
 ---
 
-## Global SHAP Analysis
+## Installation
 
-For batch predictions, SHAP is calculated across the uploaded customer population.
+### 1. Clone the repository
 
-The application provides a global feature importance analysis based on mean absolute SHAP values.
-
-This identifies the characteristics that have the greatest overall influence on the model's predictions within the analysed customer dataset.
-
-### SHAP Beeswarm Plot
-
-The beeswarm plot provides a more detailed view of how individual feature values are associated with changes in model output across customers.
-
-It is intended primarily for users who require a more technical understanding of model behaviour.
-
----
-
-## SHAP Dependence Analysis
-
-The SHAP dependence plot allows a selected feature to be examined across the customer population.
-
-It shows how the value of an individual feature is associated with its SHAP contribution to the model's predictions.
-
-This provides a more detailed view of how the model's use of a particular feature varies across customers.
-
----
-
-## Partial Dependence Analysis
-
-The Partial Dependence Plot (PDP) provides a complementary view of model behaviour.
-
-It shows how the model's average predicted response changes as a selected feature varies while averaging over the other features in the analysed dataset.
-
-PDP analysis describes model behaviour and should not be interpreted as evidence that changing a particular customer characteristic will necessarily cause churn or prevent it.
-
----
-
-# Uncertainty and Conformal Prediction
-
-The application uses conformal prediction to complement the model's churn probability.
-
-The conformal prediction component is calibrated using a separate calibration dataset and configured with a **95% confidence level**.
-
-For an individual customer, the prediction set may contain:
-
-```text
-{Churn}
-
-{No Churn}
-
-or:
-
-{No Churn, Churn}
-
-A prediction set containing both classes indicates uncertainty between the two possible outcomes at the selected confidence level.
-
-For batch predictions, the conformal prediction set is provided for every customer and summarised in the application. This provides an additional uncertainty-aware output alongside the model's predicted probability.
-
----
-
-## Input Data
-
-For batch prediction, the application accepts CSV files.
-
-The following columns are required:
-
-```text
-CreditScore
-Geography
-Gender
-Age
-Tenure
-Balance
-NumOfProducts
-HasCrCard
-IsActiveMember
-EstimatedSalary
-
-After entering the customer's information, select:
-
-**Predict Customer Churn**
-
-The application processes the customer's information using the same feature structure used by the trained model and generates the prediction.
-
----
-
-### Prediction Result
-
-The application displays:
-
-- Whether the customer is predicted to churn
-- Estimated probability of churn
-- Risk classification
-- Conformal prediction set
-
-The probability represents the model's estimated likelihood of churn and should not be interpreted as certainty that the customer will leave the bank.
-
----
-
-## Batch Customer Prediction
-
-The Batch Prediction interface allows users to upload a CSV file containing multiple customer records.
-
-After the file is uploaded, the application:
-
-1. Reads and validates the dataset.
-2. Checks that all required columns are present.
-3. Applies the required preprocessing.
-4. Aligns the input features with the trained model.
-5. Generates churn predictions.
-6. Calculates churn probabilities.
-7. Generates conformal prediction sets.
-8. Displays summary statistics.
-9. Provides filtering options.
-10. Allows the results to be downloaded as a CSV file.
-11. Provides global model interpretation for the uploaded customer population.
-
----
-
-### Batch Prediction Summary
-
-The application reports:
-
-- Total number of customers
-- Number predicted to churn
-- Number predicted not to churn
-- Number receiving a conformal churn prediction
+```bash
+git clone https://github.com/OnyekaEkesi/Reliable-Interpretable-Churn-Prediction.git
