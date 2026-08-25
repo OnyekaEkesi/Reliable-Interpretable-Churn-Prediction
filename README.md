@@ -1,137 +1,181 @@
 # Bank Customer Churn Prediction
 
-## Introduction
+An interpretable machine learning application for predicting **bank customer churn** and supporting customer-care decision-making.
 
-This project develops an interpretable machine learning system for predicting **bank customer churn** and presenting the predictions through an interactive Streamlit application.
-
-The project combines machine learning-based churn prediction with model interpretability and uncertainty-aware outputs. The application is designed primarily for **bank customer representatives and customer-care teams**, providing both individual and batch prediction capabilities.
-
-For individual customers, the application provides a churn prediction, estimated churn probability, conformal prediction set, and local SHAP explanations showing which customer characteristics most influenced the prediction.
-
-For multiple customers, the application provides batch predictions, conformal prediction results, downloadable outputs, and global model interpretation using SHAP feature importance, beeswarm plots, SHAP dependence plots, and partial dependence plots.
-
-The overall objective is to provide a practical decision-support tool that can help customer-care teams identify customers who may be at elevated risk of churn and better understand the factors underlying model predictions.
-
----
-
-## Table of Contents
-
-1. [Project Overview](#project-overview)
-2. [Key Features](#key-features)
-3. [Getting Started](#getting-started)
-   - [Prerequisites](#prerequisites)
-   - [Installation](#installation)
-   - [Running the Application](#running-the-application)
-4. [Using the Streamlit Application](#using-the-streamlit-application)
-   - [Single Customer Prediction](#single-customer-prediction)
-   - [Batch Customer Prediction](#batch-customer-prediction)
-5. [Model Interpretability](#model-interpretability)
-   - [Local SHAP Explanations](#local-shap-explanations)
-   - [Global SHAP Analysis](#global-shap-analysis)
-   - [SHAP Dependence Analysis](#shap-dependence-analysis)
-   - [Partial Dependence Analysis](#partial-dependence-analysis)
-6. [Uncertainty and Conformal Prediction](#uncertainty-and-conformal-prediction)
-7. [Input Data](#input-data)
-8. [Project Organisation](#project-organisation)
-9. [Project Lifecycle](#project-lifecycle)
-10. [Deployment](#deployment)
-11. [Contributing](#contributing)
-12. [License](#license)
-13. [Author](#author)
-
----
-
-## Project Overview
-
-The project addresses the problem of predicting whether bank customers are likely to leave the institution.
-
-The machine learning model uses customer-level information to estimate churn risk. The resulting predictions are presented through an interactive web application that allows users to analyse individual customers or process a larger customer dataset.
-
-The application is designed around four main objectives:
-
-- **Prediction** — estimate the likelihood that a customer will churn.
-- **Interpretability** — explain the factors influencing individual and overall model predictions.
-- **Uncertainty awareness** — provide conformal prediction sets alongside model probabilities.
-- **Decision support** — help customer-care teams identify customers who may require closer attention.
-
-The application is not intended to establish that a particular customer characteristic directly causes churn. Model explanations describe how the trained model uses the available customer characteristics when generating predictions.
-
----
+The project uses a trained **LightGBM classifier** to estimate customer churn risk, **SHAP** to explain model predictions, and **conformal prediction** to provide additional information about prediction uncertainty. The model is deployed through an interactive **Streamlit application**.
 
 ## Key Features
 
-### Individual Customer Prediction
+- **Single Customer Prediction** — predict churn risk for an individual customer.
+- **Batch Prediction** — upload a CSV file and analyse multiple customers.
+- **Churn Probability** — view the estimated probability of customer churn.
+- **Conformal Prediction** — communicate uncertainty through prediction sets.
+- **Local SHAP Explanations** — understand the factors influencing an individual prediction.
+- **Global SHAP Analysis** — identify influential features across multiple customers.
+- **SHAP Dependence Plots** — examine how individual features influence model predictions.
+- **Partial Dependence Plots (PDP)** — examine the model's average response to changes in selected features.
+- **Downloadable Results** — export batch predictions as a CSV file.
 
-Users can enter information for an individual bank customer and obtain:
+## Application Purpose
 
-- Churn prediction
-- Estimated churn probability
-- Churn risk classification
-- Conformal prediction set
-- Local SHAP explanation
-- Key factors influencing the prediction
-- Detailed SHAP waterfall plot
-- Technical feature contribution information
-- Factors increasing and reducing estimated churn risk
+The application is designed primarily as a **decision-support tool for bank customer representatives and customer-care teams**.
 
-### Batch Customer Prediction
+It helps users answer three practical questions:
 
-Users can upload a CSV file containing multiple customer records and obtain:
+1. **Is this customer at risk of churn?**
+2. **How high is the estimated churn risk?**
+3. **Which customer characteristics influenced the prediction?**
 
-- Predictions for each customer
-- Churn probabilities
-- Conformal prediction sets
-- Prediction summary statistics
-- Customer filtering
-- Downloadable prediction results
-
-### Model Interpretability
-
-The application provides several interpretability methods:
-
-- Local SHAP explanations
-- Global SHAP feature importance
-- SHAP beeswarm analysis
-- SHAP dependence analysis
-- Partial dependence analysis
-
-These provide complementary views of how the model uses customer characteristics when predicting churn.
-
-### Uncertainty Analysis
-
-The application uses conformal prediction to provide prediction sets at a 95% confidence level.
-
-A prediction set may contain:
-
-- `{Churn}`
-- `{No Churn}`
-- `{No Churn, Churn}`
-
-A set containing both classes indicates that the conformal prediction does not provide a single-class prediction at the specified confidence level.
-
----
+Model explanations describe the behaviour of the predictive model and should not be interpreted as evidence that individual customer characteristics directly cause churn.
 
 ## Getting Started
-
-These instructions explain how to set up and run the project locally.
-
-## Prerequisites
-
-Before running the project, ensure that Python is installed on your computer.
-
-The project is developed using Python 3.12.
-
-Python can be downloaded from:
-
-https://www.python.org/
-
-A virtual environment is recommended so that project dependencies remain isolated from other Python projects.
-
----
-
-## Installation
 
 ### 1. Clone the repository
 
 ```bash
 git clone https://github.com/OnyekaEkesi/Reliable-Interpretable-Churn-Prediction.git
+cd Reliable-Interpretable-Churn-Prediction
+```
+
+### 2. Create a virtual environment
+
+**Windows**
+
+```bash
+python -m venv .venv
+```
+
+**macOS/Linux**
+
+```bash
+python3 -m venv .venv
+```
+
+### 3. Activate the environment
+
+**Windows PowerShell**
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+**Windows Command Prompt**
+
+```cmd
+.venv\Scripts\activate
+```
+
+**macOS/Linux**
+
+```bash
+source .venv/bin/activate
+```
+
+### 4. Install dependencies
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### 5. Run the Streamlit application
+
+```bash
+python -m streamlit run app.py
+```
+
+The application should open automatically in your browser.
+
+## Required Input Features
+
+The model uses the following customer information:
+
+- `CreditScore`
+- `Geography`
+- `Gender`
+- `Age`
+- `Tenure`
+- `Balance`
+- `NumOfProducts`
+- `HasCrCard`
+- `IsActiveMember`
+- `EstimatedSalary`
+
+Batch prediction files must contain these columns.
+
+## Model Interpretability
+
+The application provides both **local and global explanations**.
+
+**Local explanations** use SHAP to show which features increase or reduce the estimated churn risk for an individual customer.
+
+**Global explanations** use SHAP feature importance, beeswarm plots, dependence plots, and partial dependence plots to examine the model's behaviour across multiple customers.
+
+## Uncertainty Analysis
+
+Conformal prediction is used alongside the model's churn probability.
+
+At the configured **95% confidence level**, the prediction set may contain:
+
+```text
+{Churn}
+{No Churn}
+{No Churn, Churn}
+```
+
+A set containing both classes indicates greater uncertainty between the two possible outcomes.
+
+## Project Structure
+
+```text
+Reliable-Interpretable-Churn-Prediction/
+│
+├── app.py
+├── requirements.txt
+├── runtime.txt
+│
+├── models/
+│   ├── lgbm_model.pkl
+│   ├── feature_columns.pkl
+│   ├── X_calib.pkl
+│   └── y_calib.pkl
+│
+├── assets/
+│   └── logo.png
+│
+└── README.md
+```
+
+## Technology Stack
+
+- Python
+- Streamlit
+- LightGBM
+- SHAP
+- MAPIE
+- Scikit-learn
+- Pandas
+- NumPy
+- Matplotlib
+
+## Deployment
+
+The application is deployed using **Streamlit Community Cloud**.
+
+The main application entry point is:
+
+```text
+app.py
+```
+
+Dependencies required for deployment are specified in:
+
+```text
+requirements.txt
+```
+
+## Author
+
+**Onyekachukwu Ekesi**  
+MSc Data Science and Business Analytics
+
+This project was developed as part of an MSc research project on **bank customer churn prediction, model interpretability, uncertainty-aware prediction, and decision support**.
