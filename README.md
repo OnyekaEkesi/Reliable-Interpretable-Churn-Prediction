@@ -1,32 +1,70 @@
-# Bank Customer Churn Prediction
+# Reliable and Interpretable Bank Customer Churn Prediction
 
-An interpretable machine learning application for predicting **bank customer churn** and supporting customer-care decision-making.
+An end-to-end machine learning project for predicting **bank customer churn**, evaluating competing models, interpreting their predictions, and providing uncertainty-aware outputs through an interactive application.
 
-The project uses a trained **LightGBM classifier** to estimate customer churn risk, **SHAP** to explain model predictions, and **conformal prediction** to provide additional information about prediction uncertainty. The model is deployed through an interactive **Streamlit application**.
+The study compares three tree-based machine learning models — **Random Forest, LightGBM, and XGBoost** — with **XGBoost achieving the best overall performance and being selected for deployment**.
 
-## Key Features
+## Project Overview
 
-- **Single Customer Prediction** — predict churn risk for an individual customer.
-- **Batch Prediction** — upload a CSV file and analyse multiple customers.
-- **Churn Probability** — view the estimated probability of customer churn.
-- **Conformal Prediction** — communicate uncertainty through prediction sets.
-- **Local SHAP Explanations** — understand the factors influencing an individual prediction.
-- **Global SHAP Analysis** — identify influential features across multiple customers.
-- **SHAP Dependence Plots** — examine how individual features influence model predictions.
-- **Partial Dependence Plots (PDP)** — examine the model's average response to changes in selected features.
-- **Downloadable Results** — export batch predictions as a CSV file.
+The project follows an end-to-end machine learning workflow:
 
-## Application Purpose
+**Data Preparation → Exploratory Data Analysis → Model Development → Model Comparison → Evaluation → Interpretability → Uncertainty Analysis → Deployment**
 
-The application is designed primarily as a **decision-support tool for bank customer representatives and customer-care teams**.
+The analysis includes:
 
-It helps users answer three practical questions:
+- Data preprocessing and exploratory analysis
+- Class imbalance handling using SMOTE
+- Random Forest, LightGBM and XGBoost modelling
+- Hyperparameter tuning
+- Model performance evaluation
+- SHAP-based model interpretation
+- SHAP dependence and Partial Dependence analysis
+- Conformal prediction for uncertainty
+- Interactive Streamlit deployment
 
-1. **Is this customer at risk of churn?**
-2. **How high is the estimated churn risk?**
-3. **Which customer characteristics influenced the prediction?**
+## Application
 
-Model explanations describe the behaviour of the predictive model and should not be interpreted as evidence that individual customer characteristics directly cause churn.
+The final XGBoost model is deployed through a **Streamlit application** designed as a decision-support tool for **bank customer representatives and customer-care teams**.
+
+The application provides:
+
+- **Single Customer Prediction**
+- **Batch Customer Prediction**
+- Churn probability and risk classification
+- Conformal prediction sets
+- Local SHAP explanations
+- Global SHAP analysis
+- SHAP dependence plots
+- Partial Dependence Plots (PDP)
+- Downloadable prediction results
+
+The application is intended to help customer-care teams identify customers who may be at risk of churn and understand the factors influencing the model's predictions.
+
+> **Note:** Model explanations describe the behaviour of the trained model and should not be interpreted as evidence that individual customer characteristics directly cause churn.
+
+## Model Interpretability
+
+SHAP is used to provide both **local and global explanations** of the XGBoost model.
+
+Local explanations identify the customer characteristics that contribute most strongly to an individual churn prediction.
+
+Global explanations examine the features that have the greatest overall influence on predictions across customers.
+
+SHAP dependence plots and Partial Dependence Plots provide additional analysis of how selected features relate to model behaviour.
+
+## Uncertainty Analysis
+
+**Conformal prediction** is used alongside the model's predicted churn probability to provide an additional indication of prediction uncertainty.
+
+At the configured confidence level, prediction sets may contain:
+
+```text
+{Churn}
+{No Churn}
+{No Churn, Churn}
+```
+
+A prediction set containing both classes indicates uncertainty between the two possible outcomes.
 
 ## Getting Started
 
@@ -51,7 +89,7 @@ python -m venv .venv
 python3 -m venv .venv
 ```
 
-### 3. Activate the environment
+### 3. Activate the virtual environment
 
 **Windows PowerShell**
 
@@ -77,7 +115,7 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-### 5. Run the Streamlit application
+### 5. Run the application
 
 ```bash
 python -m streamlit run app.py
@@ -85,9 +123,9 @@ python -m streamlit run app.py
 
 The application should open automatically in your browser.
 
-## Required Input Features
+## Input Features
 
-The model uses the following customer information:
+The model uses the following customer characteristics:
 
 - `CreditScore`
 - `Geography`
@@ -100,82 +138,55 @@ The model uses the following customer information:
 - `IsActiveMember`
 - `EstimatedSalary`
 
-Batch prediction files must contain these columns.
-
-## Model Interpretability
-
-The application provides both **local and global explanations**.
-
-**Local explanations** use SHAP to show which features increase or reduce the estimated churn risk for an individual customer.
-
-**Global explanations** use SHAP feature importance, beeswarm plots, dependence plots, and partial dependence plots to examine the model's behaviour across multiple customers.
-
-## Uncertainty Analysis
-
-Conformal prediction is used alongside the model's churn probability.
-
-At the configured **95% confidence level**, the prediction set may contain:
-
-```text
-{Churn}
-{No Churn}
-{No Churn, Churn}
-```
-
-A set containing both classes indicates greater uncertainty between the two possible outcomes.
+These features are also required for batch prediction files.
 
 ## Project Structure
 
 ```text
 Reliable-Interpretable-Churn-Prediction/
 │
-├── app.py
-├── requirements.txt
-├── runtime.txt
+├── notebooks/                  # Data analysis, modelling and evaluation
 │
-├── models/
-│   ├── lgbm_model.pkl
+├── models/                     # Trained model and supporting artefacts
+│   ├── xgb_model.pkl
 │   ├── feature_columns.pkl
 │   ├── X_calib.pkl
 │   └── y_calib.pkl
 │
-├── assets/
+├── assets/                     # Application assets
 │   └── logo.png
 │
+├── app.py                      # Streamlit application
+├── requirements.txt            # Python dependencies
+├── runtime.txt                 # Deployment runtime
 └── README.md
 ```
 
 ## Technology Stack
 
 - Python
-- Streamlit
+- Pandas
+- NumPy
+- Scikit-learn
+- Imbalanced-learn
+- Random Forest
+- XGBoost
 - LightGBM
 - SHAP
 - MAPIE
-- Scikit-learn
-- Pandas
-- NumPy
 - Matplotlib
+- Seaborn
+- Streamlit
 
 ## Deployment
 
-The application is deployed using **Streamlit Community Cloud**.
+The final application is deployed using **Streamlit Community Cloud**.
 
-The main application entry point is:
-
-```text
-app.py
-```
-
-Dependencies required for deployment are specified in:
-
-```text
-requirements.txt
-```
+The deployed application uses the trained XGBoost model and supporting artefacts stored in the `models/` directory.
 
 ## Author
 
 **Onyekachukwu Ekesi**  
 MSc Data Science and Business Analytics
 
-This project was developed as part of an MSc research project on **bank customer churn prediction, model interpretability, uncertainty-aware prediction, and decision support**.
+This project was developed as part of an MSc research project on **reliable and interpretable machine learning for bank customer churn prediction**.
