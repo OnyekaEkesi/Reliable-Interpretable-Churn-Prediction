@@ -178,6 +178,8 @@ A prediction set containing both classes indicates uncertainty between the two p
 
 For batch predictions, the conformal prediction set is provided for every customer and summarised in the application. This provides an additional uncertainty-aware output alongside the model's predicted probability.
 
+---
+
 ## Input Data
 
 For batch prediction, the application accepts CSV files.
@@ -201,6 +203,8 @@ After entering the customer's information, select:
 **Predict Customer Churn**
 
 The application processes the customer's information using the same feature structure used by the trained model and generates the prediction.
+
+---
 
 ### Prediction Result
 
@@ -232,6 +236,8 @@ After the file is uploaded, the application:
 9. Provides filtering options.
 10. Allows the results to be downloaded as a CSV file.
 11. Provides global model interpretation for the uploaded customer population.
+
+---
 
 ### Batch Prediction Summary
 
