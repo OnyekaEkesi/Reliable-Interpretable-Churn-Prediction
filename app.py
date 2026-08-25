@@ -608,10 +608,10 @@ if page == "Single Prediction":
             Each feature represents information about this customer.
 
             • Features pushing the prediction toward **Churn** increase
-            the customer's estimated risk of leaving.
+            the customer's estimated risk of leaving. These are the red bars.
 
             • Features pushing the prediction toward **No Churn** reduce
-            the estimated risk.
+            the estimated risk. These are the blue bars.
 
             • Larger contributions indicate a stronger influence on the
             model's prediction.
