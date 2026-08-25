@@ -369,8 +369,8 @@ if page == "Single Prediction":
             )
 
             st.write(
-                "The conformal prediction indicates uncertainty "
-                "between the two classes."
+                "The prediction is uncertain: both No Churn and Churn remain within the "
+                "conformal prediction set at the selected 95% coverage level."
             )
 
         elif churn_in_set:
@@ -380,8 +380,8 @@ if page == "Single Prediction":
             )
 
             st.write(
-                "The conformal prediction set contains only "
-                "the Churn class."
+                "The uncertainty analysis supports Churn as the only included outcome at the selected 95% "
+                "coverage level. This does not mean the customer is certain to churn"
             )
 
         elif no_churn_in_set:
@@ -391,8 +391,8 @@ if page == "Single Prediction":
             )
 
             st.write(
-                "The conformal prediction set contains only "
-                "the No Churn class."
+                "The uncertainty analysis supports No Churn as the only included outcome at the selected 95% "
+                "coverage level. This does not mean the customer is certain to remain with the bank."
             )
 
         else:
