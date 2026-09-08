@@ -370,7 +370,7 @@ if page == "Single Prediction":
 
             st.write(
                 "The prediction is uncertain: both No Churn and Churn remain within the "
-                "conformal prediction set at the selected 95% coverage level."
+                "conformal prediction set at the selected 95% confidence level."
             )
 
         elif churn_in_set:
@@ -381,7 +381,7 @@ if page == "Single Prediction":
 
             st.write(
                 "The uncertainty analysis supports Churn as the only included outcome at the selected 95% "
-                "coverage level. This does not mean the customer is certain to churn"
+                "confidence level. This does not mean the customer is certain to churn"
             )
 
         elif no_churn_in_set:
@@ -392,7 +392,7 @@ if page == "Single Prediction":
 
             st.write(
                 "The uncertainty analysis supports No Churn as the only included outcome at the selected 95% "
-                "coverage level. This does not mean the customer is certain to remain with the bank."
+                "confidence level. This does not mean the customer is certain to remain with the bank."
             )
 
         else:
@@ -880,11 +880,8 @@ elif page == "Batch Prediction":
         # DISPLAY RESULTS
         ##########################################################
 
-        ### MAPIE for batch
-        y_conformal_pred, y_prediction_sets = conformal_model.predict_set(processed_df)
-
         ############################################################
-        # MAPIE CONFORMAL PREDICTION
+        # MAPIE CONFORMAL PREDICTION (MAPIE for batch)
         ############################################################
 
         y_conformal_pred, y_prediction_sets = (
