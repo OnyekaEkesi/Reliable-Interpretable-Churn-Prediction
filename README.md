@@ -187,6 +187,6 @@ The deployed application uses the trained XGBoost model and supporting artefacts
 ## Author
 
 **Onyekachukwu Ekesi**  
-MSc Data Science and Business Analytics
+MSc Data Science and Business Analytics / University of Plymouth
 
 This project was developed as part of an MSc research project on **reliable and interpretable machine learning for bank customer churn prediction**.
